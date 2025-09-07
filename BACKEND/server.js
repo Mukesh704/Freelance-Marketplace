@@ -4,6 +4,9 @@ const app = express();
 require('dotenv').config();
 require('./db/db.js');
 
+const bodyparser = require('body-parser')
+app.use(bodyparser.json());
+
 app.listen(process.env.PORT, ()=> {
     console.log(`Server is running on port: ${process.env.PORT}`);
 })

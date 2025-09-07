@@ -1,0 +1,85 @@
+Routes:
+
+1. Auth & User Management
+    POST /auth/register → Register new user
+    POST /auth/login → Login (JWT + cookie/token)
+    POST /auth/logout → Logout
+    POST /auth/forgot-password → Send reset email
+    POST /auth/reset-password/:token → Reset password
+    GET /users/me → Get current logged-in user
+    PUT /users/me → Update user basic info (email, username, etc.)
+    DELETE /users/me → Deactivate account
+(Admin only)
+    GET /admin/users → List all users
+    PUT /admin/users/:id/ban → Ban/Unban a user
+
+2. Profiles
+    GET /profiles/:userId → Get user profile (freelancer/client)
+    POST /profiles → Create profile (first time after signup)
+    PUT /profiles/:id → Update profile
+    GET /profiles → List/search profiles (filter by skills, location, rating, etc.)
+
+3. Jobs / Projects
+(Client side)
+    POST /jobs → Create a job/project
+    GET /jobs → List jobs (search, filter by category, budget, skills, etc.)
+    GET /jobs/:id → Get job details
+    PUT /jobs/:id → Update job (client only)
+    DELETE /jobs/:id → Delete job
+(Freelancer side)
+    POST /jobs/:id/proposals → Submit a proposal
+    GET /jobs/:id/proposals → View proposals for a job (client only)
+    GET /proposals/me → View proposals submitted by logged-in freelancer
+    PUT /proposals/:id → Update proposal (e.g., change bid)
+    DELETE /proposals/:id → Withdraw proposal
+
+4. Contracts (Escrow Work Agreements)
+    POST /contracts → Create contract (after client accepts a proposal)
+    GET /contracts/:id → Get contract details
+    PUT /contracts/:id/status → Update contract status (active, completed, cancelled)
+    GET /contracts → List contracts (filter by client/freelancer)
+
+5. Messaging (Real-time Chat)
+    POST /messages → Send a message
+    GET /messages/:conversationId → Get messages in a conversation
+    GET /conversations → List all conversations for logged-in user
+
+6. Wallet & Transactions
+    GET /wallet → Get logged-in user wallet balance
+    POST /wallet/deposit → Deposit money (via Stripe/Razorpay/manual)
+    POST /wallet/withdraw → Withdraw money
+Transactions (history + escrow support):
+    GET /transactions → List all user transactions
+    POST /transactions → Create transaction (internal use when escrow releases)
+(Escrow actions)
+    POST /escrow/fund → Client funds escrow for contract
+    POST /escrow/release → Release escrow to freelancer
+    POST /escrow/refund → Refund escrow to client
+(Admin)
+    GET /admin/transactions → All transactions
+    GET /admin/wallet → Platform’s wallet
+
+7. Reviews & Ratings
+    POST /reviews/:contractId → Leave review (after contract completion)
+    GET /reviews/:userId → Get reviews for a freelancer/client
+
+8. Notifications
+    GET /notifications → Get user notifications
+    PUT /notifications/:id/read → Mark as read
+
+9. Admin Dashboard
+    GET /admin/stats → Users, jobs, revenue, contracts overview
+    GET /admin/reports → Get reported users/jobs/contracts
+    PUT /admin/reports/:id/resolve → Resolve report
+
+
+
+EXAMPLE FLOW:
+
+Client posts a job → /jobs
+Freelancer sends proposal → /jobs/:id/proposals
+Client accepts → contract created → /contracts
+Client funds escrow → /escrow/fund
+Work done → client releases escrow → /escrow/release
+Freelancer gets paid via wallet → /wallet
+Both leave reviews → /reviews/:contractId
