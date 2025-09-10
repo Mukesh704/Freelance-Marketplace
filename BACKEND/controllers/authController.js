@@ -45,6 +45,57 @@ async function registerController(req, res) {
     }
 }
 
+async function loginController(req, res) {
+    try {
+        const {email, password} = req.body;
+
+        if(!email || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'These fields are required',
+            })
+        }
+
+        const user = await userModel.findOne({email: email});
+
+        if(!user) {
+            return res.status(401).json({
+                success: false,
+                error: 'incorrect email or password',
+            })
+        }
+
+        const checkPass = await user.comparePassword(password);
+
+        if(!checkPass) {
+            return res.status(401).json({
+                success: false,
+                error: 'incorrect email or password',
+            })
+        }
+
+        const payload = {
+            id: user.id,
+            email: user.email,
+            role: user.role
+        }
+
+        const token = generateToken(payload);
+
+        res.status(200).json({
+            success: true,
+            token: token
+        })
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            success: false,
+            error: 'Internal Server Error',
+        })
+    }
+}
+
 module.exports = {
     registerController,
+    loginController,
 }
