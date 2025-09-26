@@ -30,11 +30,12 @@ async function registerController(req, res) {
         }
 
         const token = generateToken(payload);
+        res.cookie('token', token);
 
         res.status(201).json({
             success: true,
             response: user,
-            token: token
+            message: 'User registered successfully',
         })
     } catch (err) {
         console.log(err);
@@ -81,10 +82,11 @@ async function loginController(req, res) {
         }
 
         const token = generateToken(payload);
+        res.cookie('token', token);
 
         res.status(200).json({
             success: true,
-            token: token
+            message: 'User logged in successfully',
         })
     } catch (err) {
         console.log(err);
@@ -95,7 +97,23 @@ async function loginController(req, res) {
     }
 }
 
+function logoutController(req, res) {
+    try {
+        res.clearCookie('token');
+        res.status(200).json({
+            success: true,
+            message: 'User logged out successfully',
+        })
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: 'Internal Server Error',
+        })
+    }
+}
+
 module.exports = {
     registerController,
     loginController,
+    logoutController,
 }
