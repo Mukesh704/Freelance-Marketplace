@@ -2,6 +2,7 @@ const userModel = require('../models/userModel');
 const { generateToken } = require('../middlewares/authMiddleware');
 const nodemailer = require('nodemailer');
 const { randomInt, createHash } = require('node:crypto');
+const jwt = require('jsonwebtoken');
 
 async function registerController(req, res) {
     try {
@@ -218,9 +219,76 @@ async function verifyOtpController(req, res) {
         user.otpExpires = undefined;
         await user.save();
 
+        const resetPasswordToken = jwt.sign(
+            {id: user._id},
+            process.env.JWT_RESET_PASSWORD_KEY,
+            {expiresIn: '15m'}
+        );
+
+        res.cookie('resetPasswordToken', resetPasswordToken, {
+            maxAge: 15 * 60 * 1000,
+        })
+
         res.status(200).json({
             success: true,
             message: 'OTP verified successfully, you can now reset your password',
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            success: false,
+            error: 'Internal Server Error',
+        })
+    }
+}
+
+async function resetPasswordController(req, res) {
+    try {
+        const {newPassword, confirmPassword} = req.body;
+
+        if(!newPassword || !confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Passwords did not match',
+            });
+        }
+
+        const token = req.cookies.resetPasswordToken;
+
+        if(!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized, please verify OTP again',
+            });
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_RESET_PASSWORD_KEY);
+        } catch (err) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired reset token",
+            });
+        }
+
+        const user = await userModel.findById(decoded.id);
+
+        if(!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.clearCookie("resetPasswordToken");
+
+        res.status(200).json({
+            success: true,
+            message: 'Password reset successfully, you can now login with your new password',
         });
     } catch (err) {
         console.log(err);
@@ -237,4 +305,5 @@ module.exports = {
     logoutController,
     forgotPasswordController,
     verifyOtpController,
+    resetPasswordController,
 }
